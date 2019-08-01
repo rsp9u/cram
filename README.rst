@@ -42,6 +42,7 @@ Here's a snippet from `Cram's own test suite`_::
         --shell-opts=OPTS   arguments to invoke shell with
         --indent=NUM        number of spaces to use for indentation (default: 2)
         --xunit-file=PATH   path to write xUnit XML output
+        --no-escape         don't escape test output
 
 The format in a nutshell:
 

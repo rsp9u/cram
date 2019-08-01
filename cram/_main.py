@@ -106,6 +106,8 @@ def _parseopts(args):
                                    '(default: %default)'))
     p.add_option('--xunit-file', action='store', metavar='PATH',
                  help='path to write xUnit XML output')
+    p.add_option('--no-escape', action='store_true',
+                 help="don't escape test output")
     opts, paths = p.parse_args(args)
     paths = [fsencode(path) for path in paths]
     return opts, paths, p.get_usage
@@ -183,7 +185,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     os.mkdir(proctmp)
     try:
         tests = runtests(paths, tmpdirb, shell, indent=opts.indent,
-                         cleanenv=not opts.preserve_env, debug=opts.debug)
+                         cleanenv=not opts.preserve_env, debug=opts.debug, noescape=opts.no_escape)
         if not opts.debug:
             tests = runcli(tests, quiet=opts.quiet, verbose=opts.verbose,
                            patchcmd=patchcmd, answer=answer)

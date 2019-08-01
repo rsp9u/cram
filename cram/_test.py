@@ -22,7 +22,7 @@ def _escape(s):
             b(' (esc)\n'))
 
 def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
-         cleanenv=True, debug=False):
+         cleanenv=True, debug=False, noescape=False):
     r"""Run test lines and return input, output, and diff.
 
     This returns a 3-tuple containing the following:
@@ -159,7 +159,7 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
             if not out.endswith(b('\n')):
                 out += b(' (no-eol)\n')
 
-            if _needescape(out):
+            if _needescape(out) and noescape is False:
                 out = _escape(out)
             postout.append(indent + out)
 
@@ -184,7 +184,7 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
     return refout, postout, []
 
 def testfile(path, shell='/bin/sh', indent=2, env=None, cleanenv=True,
-             debug=False, testname=None):
+             debug=False, testname=None, noescape=False):
     """Run test at path and return input, output, and diff.
 
     This returns a 3-tuple containing the following:
@@ -225,6 +225,6 @@ def testfile(path, shell='/bin/sh', indent=2, env=None, cleanenv=True,
         if testname is None: # pragma: nocover
             testname = os.path.basename(abspath)
         return test(f, shell, indent=indent, testname=testname, env=env,
-                    cleanenv=cleanenv, debug=debug)
+                    cleanenv=cleanenv, debug=debug, noescape=noescape)
     finally:
         f.close()
