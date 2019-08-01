@@ -108,6 +108,8 @@ def _parseopts(args):
                  help='path to write xUnit XML output')
     p.add_option('--no-escape', action='store_true',
                  help="don't escape test output")
+    p.add_option('--debug-script', action='store_true',
+                 help='write script directly to the terminal')
     opts, paths = p.parse_args(args)
     paths = [fsencode(path) for path in paths]
     return opts, paths, p.get_usage
@@ -138,7 +140,11 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
                  ('--debug', opts.debug, '--quiet', opts.quiet),
                  ('--debug', opts.debug, '--interactive', opts.interactive),
                  ('--debug', opts.debug, '--verbose', opts.verbose),
-                 ('--debug', opts.debug, '--xunit-file', opts.xunit_file)]
+                 ('--debug', opts.debug, '--xunit-file', opts.xunit_file),
+                 ('--debug-script', opts.debug_script, '--quiet', opts.quiet),
+                 ('--debug-script', opts.debug_script, '--interactive', opts.interactive),
+                 ('--debug-script', opts.debug_script, '--verbose', opts.verbose),
+                 ('--debug-script', opts.debug_script, '--xunit-file', opts.xunit_file)]
     for s1, o1, s2, o2 in conflicts:
         if o1 and o2:
             sys.stderr.write('options %s and %s are mutually exclusive\n'
@@ -185,8 +191,9 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
     os.mkdir(proctmp)
     try:
         tests = runtests(paths, tmpdirb, shell, indent=opts.indent,
-                         cleanenv=not opts.preserve_env, debug=opts.debug, noescape=opts.no_escape)
-        if not opts.debug:
+                         cleanenv=not opts.preserve_env, debug=opts.debug,
+                         debug_script=opts.debug_script, noescape=opts.no_escape)
+        if not opts.debug and not opts.debug_script:
             tests = runcli(tests, quiet=opts.quiet, verbose=opts.verbose,
                            patchcmd=patchcmd, answer=answer)
             if opts.xunit_file is not None:

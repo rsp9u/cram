@@ -22,7 +22,7 @@ def _escape(s):
             b(' (esc)\n'))
 
 def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
-         cleanenv=True, debug=False, noescape=False):
+         cleanenv=True, debug=False, debug_script=False, noescape=False):
     r"""Run test lines and return input, output, and diff.
 
     This returns a 3-tuple containing the following:
@@ -82,6 +82,10 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
     :type cleanenv: bool
     :param debug: Whether or not to run in debug mode (don't capture stdout)
     :type debug: bool
+    :param debug_script: Whether or not to run in debug script mode (print commands that run in the shell)
+    :type debug_script: bool
+    :param noescape: Whether or not to escape test output
+    :type noescape: bool
     :return: Input, output, and diff iterables
     :rtype: (list[bytes], list[bytes], collections.Iterable[bytes])
     """
@@ -109,19 +113,6 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
         shell = [shell]
     env['TESTSHELL'] = shell[0]
 
-    if debug:
-        stdin = []
-        for line in lines:
-            if not line.endswith(b('\n')):
-                line += b('\n')
-            if line.startswith(cmdline):
-                stdin.append(line[len(cmdline):])
-            elif line.startswith(conline):
-                stdin.append(line[len(conline):])
-
-        execute(shell + ['-'], stdin=b('').join(stdin), env=env)
-        return ([], [], [])
-
     after = {}
     refout, postout = [], []
     i = pos = prepos = -1
@@ -147,6 +138,40 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
                               stdout=PIPE, stderr=STDOUT, env=env)
     if retcode == 80:
         return (refout, None, [])
+
+    if debug or debug_script:
+        inputs = []
+        outputs = []
+        cmds = []
+        for line in b('').join(stdin)[:-1].splitlines(True):
+            s = line.decode('utf-8').strip()
+            if s.startswith('echo CRAM'):
+                inputs.append(cmds)
+                cmds = []
+                continue
+            if len(cmds) == 0:
+                cmds.append('$ ' + s)
+            else:
+                cmds.append('> ' + s)
+
+        cmds = []
+        for line in output[:-1].splitlines(True):
+            s = line.decode('utf-8').strip()
+            if s.startswith('CRAM'):
+                outputs.append(cmds)
+                cmds = []
+                continue
+            cmds.append(s)
+
+        inputs = inputs[1:]
+        outputs = outputs[1:]
+
+        for i in range(len(inputs)):
+            if debug_script:
+                print('\n'.join(inputs[i]))
+            if debug:
+                print('\n'.join(outputs[i]))
+            print('')
 
     pos = -1
     ret = 0
@@ -184,7 +209,7 @@ def test(lines, shell='/bin/sh', indent=2, testname=None, env=None,
     return refout, postout, []
 
 def testfile(path, shell='/bin/sh', indent=2, env=None, cleanenv=True,
-             debug=False, testname=None, noescape=False):
+             debug=False, debug_script=False, testname=None, noescape=False):
     """Run test at path and return input, output, and diff.
 
     This returns a 3-tuple containing the following:
@@ -225,6 +250,7 @@ def testfile(path, shell='/bin/sh', indent=2, env=None, cleanenv=True,
         if testname is None: # pragma: nocover
             testname = os.path.basename(abspath)
         return test(f, shell, indent=indent, testname=testname, env=env,
-                    cleanenv=cleanenv, debug=debug, noescape=noescape)
+                    cleanenv=cleanenv, debug=debug, debug_script=debug_script,
+                    noescape=noescape)
     finally:
         f.close()

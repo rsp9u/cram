@@ -31,7 +31,8 @@ def _findtests(paths):
         else:
             yield os.path.normpath(p)
 
-def runtests(paths, tmpdir, shell, indent=2, cleanenv=True, debug=False, noescape=False):
+def runtests(paths, tmpdir, shell, indent=2, cleanenv=True,
+             debug=False, debug_script=False, noescape=False):
     """Run tests and yield results.
 
     This yields a sequence of 2-tuples containing the following:
@@ -70,6 +71,7 @@ def runtests(paths, tmpdir, shell, indent=2, cleanenv=True, debug=False, noescap
                 os.chdir(testdir)
                 return testfile(abspath, shell, indent=indent,
                                 cleanenv=cleanenv, debug=debug,
+                                debug_script=debug_script,
                                 testname=path, noescape=noescape)
             finally:
                 os.chdir(cwd)
